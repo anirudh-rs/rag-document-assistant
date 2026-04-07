@@ -45,5 +45,3 @@ C:\Users\aniru\OneDrive\Desktop\RAG
 - Add a file uploader in the browser UI
 - Deploy to Streamlit Cloud (free)
 - Swap GPT-4o for Claude
-
-## Difficulty: Easy-Medium
