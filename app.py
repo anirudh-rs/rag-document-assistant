@@ -43,6 +43,8 @@ html, body, [class*="css"] {
     max-width: 100% !important;
 }
 
+/* Sticky header not supported reliably in Streamlit — removed */
+
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
     background-color: #2a0030 !important;
@@ -66,14 +68,33 @@ html, body, [class*="css"] {
     line-height: 1.1 !important;
 }
 .sidebar-header span {
-    font-size: 0.62rem;
+    font-size: 0.65rem;
     color: var(--pl-pink);
     letter-spacing: 0.14em;
     text-transform: uppercase;
 }
 
+.sidebar-note {
+    margin: 0.9rem 0.8rem 0 0.8rem;
+    padding: 0.7rem 0.9rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-left: 3px solid rgba(255,255,255,0.35);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: #c8b8cc;
+    line-height: 1.6;
+}
+.sidebar-note strong {
+    display: block;
+    font-size: 0.86rem;
+    color: var(--pl-white);
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
 .teams-label {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -118,14 +139,14 @@ section[data-testid="stSidebar"] .stButton {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: 1.2rem;
-    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
     border-bottom: 1px solid rgba(233,0,82,0.2);
 }
-.pl-header-emoji { font-size: 2.8rem; line-height: 1; flex-shrink: 0; }
+.pl-header-emoji { font-size: 2.4rem; line-height: 1; flex-shrink: 0; }
 .pl-header-title {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.8rem;
+    font-size: 1.9rem;
     font-weight: 800;
     letter-spacing: 0.05em;
     color: var(--pl-white);
@@ -133,39 +154,18 @@ section[data-testid="stSidebar"] .stButton {
 }
 .pl-header-title span { color: var(--pl-pink); }
 .pl-header-sub {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--pl-muted);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-top: 3px;
+    margin-top: 4px;
 }
 
-.examples-label {
-    font-size: 0.6rem;
-    color: var(--pl-muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 0.4rem;
-}
-
-/* Example question chip buttons */
-div[data-testid="column"] .stButton button {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 20px !important;
-    color: var(--pl-muted) !important;
-    font-size: 0.73rem !important;
-    font-family: 'Barlow', sans-serif !important;
-    padding: 5px 12px !important;
-    height: auto !important;
-    white-space: normal !important;
-    text-align: left !important;
-    line-height: 1.3 !important;
-}
-div[data-testid="column"] .stButton button:hover {
-    background: rgba(233,0,82,0.1) !important;
-    border-color: rgba(233,0,82,0.3) !important;
-    color: var(--pl-white) !important;
+/* Example cycling text */
+.examples-bar {
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 1.2rem;
 }
 
 /* Chat */
@@ -174,27 +174,42 @@ div[data-testid="column"] .stButton button:hover {
     background: rgba(233,0,82,0.1) !important;
     border: 1px solid rgba(233,0,82,0.2) !important;
     border-radius: 12px 12px 2px 12px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
 }
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) .stChatMessageContent {
     background: rgba(255,255,255,0.04) !important;
     border: 1px solid rgba(255,255,255,0.08) !important;
     border-radius: 2px 12px 12px 12px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.7 !important;
 }
 [data-testid="stExpander"] {
     background: rgba(255,255,255,0.02) !important;
     border: 1px solid rgba(255,255,255,0.07) !important;
     border-radius: 8px !important;
-    margin-top: 5px !important;
+    margin-top: 6px !important;
 }
-[data-testid="stExpander"] summary { font-size: 0.72rem !important; color: var(--pl-muted) !important; }
+[data-testid="stExpander"] summary {
+    font-size: 0.74rem !important;
+    color: var(--pl-muted) !important;
+    letter-spacing: 0.03em !important;
+}
 [data-testid="stChatInput"] {
     border: 1px solid rgba(255,255,255,0.12) !important;
     border-radius: 12px !important;
     background: rgba(255,255,255,0.04) !important;
 }
 [data-testid="stChatInput"]:focus-within { border-color: rgba(233,0,82,0.4) !important; }
-[data-testid="stChatInput"] textarea { color: var(--pl-white) !important; font-family: 'Barlow', sans-serif !important; }
-[data-testid="stChatInput"] textarea::placeholder { color: var(--pl-muted) !important; }
+[data-testid="stChatInput"] textarea {
+    color: var(--pl-white) !important;
+    font-family: 'Barlow', sans-serif !important;
+    font-size: 0.9rem !important;
+}
+[data-testid="stChatInput"] textarea::placeholder {
+    color: var(--pl-muted) !important;
+    font-style: italic !important;
+}
 [data-testid="stChatInputSubmitButton"] { background: var(--pl-pink) !important; border-radius: 8px !important; }
 
 .source-pill {
@@ -202,27 +217,13 @@ div[data-testid="column"] .stButton button:hover {
     background: rgba(4,245,255,0.07);
     border: 1px solid rgba(4,245,255,0.18);
     border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.7rem;
+    padding: 3px 9px;
+    font-size: 0.72rem;
     color: var(--pl-cyan);
     margin: 2px 4px 2px 0;
     font-family: 'Barlow Condensed', sans-serif;
     letter-spacing: 0.04em;
 }
-
-.welcome-msg {
-    text-align: center;
-    padding: 3rem 2rem;
-    opacity: 0.55;
-}
-.welcome-msg h3 {
-    font-family: 'Barlow Condensed', sans-serif !important;
-    font-size: 1.3rem !important;
-    font-weight: 600 !important;
-    color: var(--pl-white) !important;
-    margin-bottom: 0.4rem !important;
-}
-.welcome-msg p { font-size: 0.82rem; color: var(--pl-muted); line-height: 1.6; }
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: rgba(233,0,82,0.25); border-radius: 2px; }
@@ -316,6 +317,10 @@ with st.sidebar:
         <h1>{header_title}</h1>
         <span>Premier League Intelligence</span>
     </div>
+    <div class="sidebar-note">
+        <strong>📋 Note</strong>
+        Records cover the 2024/25 Premier League season only. Information may not reflect current squads, managers or standings.
+    </div>
     <div class="teams-label">2024/25 Clubs</div>
     """, unsafe_allow_html=True)
 
@@ -345,8 +350,8 @@ with st.sidebar:
                     padding:5px 0.9rem;height:36px;
                     opacity:{opacity};background:{bg};
                     border-left:{border_left};box-sizing:border-box;">
-            <span style="font-size:1rem;line-height:1;width:20px;text-align:center;">{team['emoji']}</span>
-            <span style="flex:1;font-size:0.8rem;font-weight:{name_weight};
+            <span style="font-size:1.15rem;line-height:1;width:24px;text-align:center;">{team['emoji']}</span>
+            <span style="flex:1;font-size:0.9rem;font-weight:{name_weight};
                          color:{name_color};">{team['name']}</span>
             {radio}
         </div>
@@ -354,6 +359,9 @@ with st.sidebar:
 
         if st.button("x", key=f"btn_{team['name']}", use_container_width=True):
             st.session_state.selected_team = None if is_selected else team["name"]
+            st.session_state.messages = []
+            st.session_state.examples = []
+            st.session_state.examples_for = None
             st.rerun()
 
     st.markdown("""
@@ -435,29 +443,26 @@ def run_chain(question):
 # ── Main UI ───────────────────────────────────────────────────────────────────
 selected = st.session_state.selected_team
 team_data = next((t for t in TEAMS if t["name"] == selected), None) if selected else None
-
 header_emoji = team_data["emoji"] if team_data else "⚽"
 
 if selected and team_data:
-    st.markdown(f"""
+    header_html = f"""
     <div class="pl-header">
         <div class="pl-header-emoji">{header_emoji}</div>
         <div>
             <div class="pl-header-title"><span>{selected}</span> ASSIST</div>
-            <div class="pl-header-sub">Premier League 2024/25 · Club Focus · <span style="color:rgba(233,0,82,0.7);">Season complete — not updated to current</span></div>
+            <div class="pl-header-sub">Premier League 2024/25 · Club Focus</div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>"""
 else:
-    st.markdown(f"""
+    header_html = f"""
     <div class="pl-header">
         <div class="pl-header-emoji">{header_emoji}</div>
         <div>
             <div class="pl-header-title">PL 24/25 <span>ASSIST</span></div>
-            <div class="pl-header-sub">Premier League 2024/25 · All 20 Clubs · <span style="color:rgba(233,0,82,0.7);">Season complete — not updated to current</span></div>
+            <div class="pl-header-sub">Premier League 2024/25 · All 20 Clubs</div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>"""
 
 # ── Question handler ──────────────────────────────────────────────────────────
 def handle_question(question):
@@ -478,31 +483,25 @@ def handle_question(question):
         "role": "assistant", "content": answer, "sources": sources
     })
 
-# Dynamic example questions — CSS fade cycle, no buttons
+# Dynamic example questions — CSS fade cycle
 if st.session_state.examples_for != selected or not st.session_state.examples:
     pool = TEAM_EXAMPLES.get(selected, GENERAL_EXAMPLES) if selected else GENERAL_EXAMPLES
     st.session_state.examples = random.sample(pool, min(6, len(pool)))
     st.session_state.examples_for = selected
 
 examples = st.session_state.examples
+styles = ""
+questions_html = ""
 
 if examples:
     n = len(examples)
-    slot = 4          # seconds each question is visible
-    cycle = n * slot  # total cycle length
-
-    styles = ""
-    questions_html = ""
+    slot = 4
+    cycle = n * slot
+    pct_in   = (slot * 0.2  / cycle) * 100
+    pct_hold = (slot * 0.75 / cycle) * 100
+    pct_out  = (slot * 0.95 / cycle) * 100
 
     for idx, q in enumerate(examples):
-        # Each question gets its own keyframe: invisible → fade in → hold → fade out → invisible
-        # The keyframe runs over the full cycle duration
-        # We use negative animation-delay to start each question at the right offset
-        # negative delay of -idx*slot means question idx starts idx*slot seconds into its animation
-        pct_in   = (slot * 0.2  / cycle) * 100
-        pct_hold = (slot * 0.75 / cycle) * 100
-        pct_out  = (slot * 0.95 / cycle) * 100
-
         styles += f"""
 @keyframes fadeq{idx} {{
     0%            {{ opacity:0; transform:translateY(5px); }}
@@ -511,10 +510,7 @@ if examples:
     {pct_out:.2f}%  {{ opacity:0; transform:translateY(-5px); }}
     100%          {{ opacity:0; }}
 }}"""
-
-        # Negative delay = already idx*slot seconds into the animation on first render
         neg_delay = -(idx * slot)
-
         questions_html += (
             f'<div style="position:absolute;left:0;right:0;opacity:0;'
             f'font-style:italic;font-size:0.82rem;color:var(--pl-muted);'
@@ -523,35 +519,18 @@ if examples:
             f'Ask &ldquo;{q}&rdquo;</div>'
         )
 
-    st.markdown(f"""
-<style>{styles}</style>
-<div style="position:relative;height:24px;margin-bottom:1.4rem;">
-{questions_html}
-</div>
-""", unsafe_allow_html=True)
+examples_html = f'<div style="position:relative;height:24px;">{questions_html}</div>' if questions_html else ""
 
-# Welcome message
-if not st.session_state.messages:
-    if selected:
-        st.markdown(f"""
-        <div class="welcome-msg">
-            <h3>{header_emoji} Ask me anything about {selected}</h3>
-            <p>History · Manager · Players · Stadium · Records · Statistics</p>
-            <p style="font-size:0.72rem;margin-top:0.8rem;color:rgba(233,0,82,0.6);">
-                ⚠️ Based on the 2024/25 season only — not updated to current
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div class="welcome-msg">
-            <h3>⚽ Ask me anything about the Premier League</h3>
-            <p>Club history · Managers · Players · Stadiums · Records · Statistics</p>
-            <p style="font-size:0.72rem;margin-top:0.8rem;color:rgba(233,0,82,0.6);">
-                ⚠️ Based on the 2024/25 season only — not updated to current
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+# Inject keyframe animations
+if styles:
+    st.markdown(f"<style>{styles}</style>", unsafe_allow_html=True)
+
+# Header
+st.markdown(header_html, unsafe_allow_html=True)
+
+# Examples
+if examples_html:
+    st.markdown(f'<div style="margin-bottom:1rem;">{examples_html}</div>', unsafe_allow_html=True)
 
 # Message history
 for msg in st.session_state.messages:
