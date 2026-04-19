@@ -156,6 +156,3 @@ The `chroma_db` folder is committed to the repo so Streamlit Cloud has the vecto
 - [OpenAI](https://platform.openai.com/)
 - [Streamlit](https://streamlit.io/)
 
----
-
-*Built as a portfolio project demonstrating end-to-end RAG pipeline development and deployment.*
