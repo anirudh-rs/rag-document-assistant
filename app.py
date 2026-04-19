@@ -2,9 +2,9 @@ import streamlit as st
 import random
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import Chroma
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import HumanMessage, AIMessage
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -296,6 +296,8 @@ GENERAL_EXAMPLES = [
 # ── Session state ─────────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 if "selected_team" not in st.session_state:
     st.session_state.selected_team = None
 if "examples_for" not in st.session_state:
@@ -360,6 +362,7 @@ with st.sidebar:
         if st.button("x", key=f"btn_{team['name']}", use_container_width=True):
             st.session_state.selected_team = None if is_selected else team["name"]
             st.session_state.messages = []
+            st.session_state.chat_history = []
             st.session_state.examples = []
             st.session_state.examples_for = None
             st.rerun()
@@ -371,40 +374,120 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+    if "debug_mode" not in st.session_state:
+        st.session_state.debug_mode = False
+    st.session_state.debug_mode = st.toggle(
+        "🔍 Debug sources", value=st.session_state.debug_mode
+    )
+
 # ── RAG chain ─────────────────────────────────────────────────────────────────
 @st.cache_resource
-def load_retriever():
+def load_db():
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
-    return db.as_retriever(search_kwargs={"k": 10})
+    return Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 
 @st.cache_resource
 def load_llm():
     return ChatOpenAI(model="gpt-4o", temperature=0)
 
-retriever = load_retriever()
+db = load_db()
 llm = load_llm()
+
+def get_context(question, selected_team=None):
+    """
+    Retrieve docs with higher k, then reorder so priority sources appear first.
+    Always injects the standings table for season/position/comparison questions.
+    """
+    if selected_team:
+        expanded = f"{selected_team} 2024/25 Premier League season: {question}"
+    else:
+        expanded = f"2024/25 Premier League season: {question}"
+
+    docs = db.similarity_search(expanded, k=14)
+
+    if not docs:
+        return []
+
+    if selected_team:
+        team_file_map = {
+            "Arsenal": "arsenal", "Aston Villa": "aston_villa",
+            "Bournemouth": "bournemouth", "Brentford": "brentford",
+            "Brighton": "brighton", "Chelsea": "chelsea",
+            "Crystal Palace": "crystal_palace", "Everton": "everton",
+            "Fulham": "fulham", "Ipswich": "ipswich",
+            "Leicester": "leicester", "Liverpool": "liverpool",
+            "Man City": "manchester_city", "Man United": "manchester_united",
+            "Newcastle": "newcastle", "Nott'm Forest": "nottingham_forest",
+            "Southampton": "southampton", "Tottenham": "tottenham",
+            "West Ham": "west_ham", "Wolves": "wolves",
+        }
+        priority_key = team_file_map.get(selected_team, "").lower()
+    else:
+        priority_key = "pl_24_25"
+
+    priority = [d for d in docs if priority_key in d.metadata.get("source", "").lower()]
+    others   = [d for d in docs if priority_key not in d.metadata.get("source", "").lower()]
+    reordered = (priority + others)[:10]
+
+    # For position/comparison/season questions, always inject the standings table
+    position_keywords = ["finish", "position", "place", "season", "better", "compare",
+                         "table", "standing", "points", "relegated", "qualified"]
+    if any(kw in question.lower() for kw in position_keywords):
+        standings_docs = db.similarity_search(
+            "2024/25 Premier League final standings table positions points", k=3
+        )
+        standings = [d for d in standings_docs
+                     if "pl_24_25" in d.metadata.get("source", "").lower()]
+        # Prepend standings chunks, avoiding duplicates
+        existing_content = {d.page_content[:80] for d in reordered}
+        for d in standings:
+            if d.page_content[:80] not in existing_content:
+                reordered.insert(0, d)
+                existing_content.add(d.page_content[:80])
+
+    return reordered
 
 def make_prompt(team=None):
     if team:
-        sys = f"""You are PL Assist, a Premier League football intelligence assistant covering the 2024/25 season.
-The 2024/25 season is now complete — Liverpool won the title. Your knowledge covers that season only and is not updated to current.
-The user is focused on {team}. Prioritise and lead with information about {team} in your answers.
-Use the context below to answer accurately. Use football terminology naturally.
-If the answer is not in the context, say so clearly rather than guessing."""
+        system = f"""You are PL Assist, a Premier League football intelligence assistant covering the 2024/25 season.
+The user is focused on {team}.
+
+RULES — follow these exactly:
+1. Answer ONLY using facts explicitly stated in the context below. No inference, no guessing.
+2. The context contains two types of chunks: (a) historical club wiki pages, (b) the 2024/25 season Wikipedia article. Treat them separately.
+3. For questions about the 2024/25 season — use ONLY the 2024/25 season chunks. Do NOT use historical club wiki chunks to fill gaps.
+4. For questions about league position or finishing place — use the standings table in the 2024/25 chunks. The table lists position by number. Read it carefully and state the exact position.
+5. Do NOT combine historical facts with 2024/25 facts to construct an answer.
+6. If the 2024/25 context does not explicitly answer the question, say: "I don't have enough detail about this in my 2024/25 records." Do not guess."""
     else:
-        sys = """You are PL Assist, a Premier League football intelligence assistant covering the 2024/25 season.
-The 2024/25 season is now complete — Liverpool won the title. Your knowledge covers that season only and is not updated to current.
-You have knowledge of all 20 Premier League clubs that season — history, players, managers, stadiums, statistics, records and results.
-Use the context below to answer accurately. Synthesise across clubs and season data where needed.
-If the answer is not in the context, say so clearly rather than guessing."""
-    return PromptTemplate.from_template(sys + "\n\nContext: {context}\nQuestion: {question}\nAnswer:")
+        system = """You are PL Assist, a Premier League football intelligence assistant covering the 2024/25 season.
+
+RULES — follow these exactly:
+1. Answer ONLY using facts explicitly stated in the context below. No inference, no guessing.
+2. The context contains two types of chunks: (a) historical club wiki pages, (b) the 2024/25 season Wikipedia article. Treat them separately.
+3. For questions about the 2024/25 season — use ONLY the 2024/25 season chunks. Do NOT use historical club wiki chunks to fill gaps.
+4. For questions about league position or finishing place — use the standings table in the 2024/25 chunks. The table lists position by number. Read it carefully and state the exact position.
+5. Do NOT combine historical facts with 2024/25 facts to construct an answer.
+6. If the 2024/25 context does not explicitly answer the question, say: "I don't have enough detail about this in my 2024/25 records." Do not guess."""
+
+    return ChatPromptTemplate.from_messages([
+        ("system", system + "\n\nContext:\n{context}"),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{question}"),
+    ])
 
 def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+    chunks = []
+    for doc in docs:
+        source = doc.metadata.get("source", "")
+        if "pl_24_25" in source.lower() or "PL_24_25" in source:
+            label = "[2024/25 Season Data]"
+        else:
+            label = "[Club History]"
+        chunks.append(f"{label}\n{doc.page_content}")
+    return "\n\n---\n\n".join(chunks)
 
 def get_sources(docs):
-    # Friendly display names for known filenames
     name_map = {
         "pl_24_25": "Premier League 2024/25",
         "arsenal": "Arsenal", "aston_villa": "Aston Villa",
@@ -430,15 +513,20 @@ def get_sources(docs):
     return seen
 
 def run_chain(question):
-    prompt = make_prompt(st.session_state.selected_team)
-    chain = RunnableParallel(
-        answer=(
-            {"context": retriever | format_docs, "question": RunnablePassthrough()}
-            | prompt | llm | StrOutputParser()
-        ),
-        docs=retriever
-    )
-    return chain.invoke(question)
+    selected_team = st.session_state.selected_team
+    prompt = make_prompt(selected_team)
+    history = st.session_state.chat_history[-6:]
+
+    # Smart context retrieval
+    docs = get_context(question, selected_team)
+    context = format_docs(docs)
+
+    answer = (prompt | llm | StrOutputParser()).invoke({
+        "context": context,
+        "question": question,
+        "chat_history": history,
+    })
+    return {"answer": answer, "docs": docs}
 
 # ── Main UI ───────────────────────────────────────────────────────────────────
 selected = st.session_state.selected_team
@@ -479,9 +567,18 @@ def handle_question(question):
             with st.expander("Sources"):
                 st.markdown("".join(f'<span class="source-pill">{s}</span>'
                                     for s in sources), unsafe_allow_html=True)
+        if st.session_state.get("debug_mode"):
+            with st.expander("🔍 Debug — retrieved chunks"):
+                for i, doc in enumerate(result["docs"]):
+                    src = doc.metadata.get("source", "?")
+                    st.caption(f"**Chunk {i+1}** — `{src}`")
+                    st.text(doc.page_content[:300])
     st.session_state.messages.append({
         "role": "assistant", "content": answer, "sources": sources
     })
+    st.session_state.chat_history.append(HumanMessage(content=question))
+    st.session_state.chat_history.append(AIMessage(content=answer))
+    st.session_state.chat_history = st.session_state.chat_history[-6:]
 
 # Dynamic example questions — CSS fade cycle
 if st.session_state.examples_for != selected or not st.session_state.examples:
@@ -541,6 +638,9 @@ for msg in st.session_state.messages:
                 st.markdown("".join(f'<span class="source-pill">{s}</span>'
                                     for s in msg["sources"]), unsafe_allow_html=True)
 
-placeholder = f"Ask about {selected}..." if selected else "Ask about any Premier League club..."
+if selected:
+    placeholder = f'Ask about {selected} — e.g. "Who managed {selected} in 2024/25?"'
+else:
+    placeholder = 'Ask in full sentences — e.g. "Who won the 2024/25 Premier League?"'
 if question := st.chat_input(placeholder):
     handle_question(question)
