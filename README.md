@@ -10,7 +10,7 @@ Ask anything about any of the 20 clubs or the season itself — managers, stadiu
 
 ## 🔗 Live App
 
-[**Open PL 24/25 Assist →**](your-streamlit-url-here)
+[**Open PL 24/25 Assist →**](https://rag-document-assistant-ralxaxcpjy4pzwmt3phjoe.streamlit.app/)
 
 ---
 
