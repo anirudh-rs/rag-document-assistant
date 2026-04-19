@@ -16,7 +16,7 @@ Ask anything about any of the 20 clubs or the season itself — managers, stadiu
 
 ## 📸 Screenshot
 
-*Add a screenshot here*
+![PL 24/25 Assist](screenshot.png)
 
 ---
 
